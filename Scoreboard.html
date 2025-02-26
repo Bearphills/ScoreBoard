@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoreboard</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            background-color: #003C71; /* NMC dark blue */
+            color: #FFFFFF;
+        }
+        .container {
+            width: 60%;
+            margin: auto;
+            padding: 20px;
+            background-color: #0072CE; /* NMC light blue */
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        table {
+            width: 100%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: #FFFFFF;
+            color: #003C71;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        th, td {
+            border: 1px solid #003C71;
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: #005EB8;
+            color: #FFFFFF;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            border: none;
+        }
+        input {
+            width: 40%;
+        }
+        button {
+            background-color: #FFB81C;
+            color: #003C71;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #FFD200;
+        }
+        .reset-button {
+            margin-top: 10px;
+            background-color: #FF5733;
+            color: white;
+        }
+        .reset-button:hover {
+            background-color: #FF2E00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Scoreboard</h1>
+        <form id="scoreForm">
+            <input type="text" id="playerName" placeholder="Player Name" required>
+            <input type="number" id="playerScore" placeholder="Score" required>
+            <button type="submit">Add Score</button>
+        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Score</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboardBody"></tbody>
+        </table>
+        <button class="reset-button" onclick="resetScores()">Reset Scores</button>
+    </div>
+    <script>
+        const form = document.getElementById("scoreForm");
+        const leaderboardBody = document.getElementById("leaderboardBody");
+        let scores = JSON.parse(localStorage.getItem("scores")) || [];
+
+        form.addEventListener("submit", function(event) {
+            event.preventDefault();
+            const nameInput = document.getElementById("playerName");
+            const scoreInput = document.getElementById("playerScore");
+            const name = nameInput.value.trim();
+            const score = parseInt(scoreInput.value, 10);
+            
+            if (name && !isNaN(score)) {
+                scores.push({ name, score });
+                scores.sort((a, b) => b.score - a.score);
+                localStorage.setItem("scores", JSON.stringify(scores));
+                updateLeaderboard();
+                nameInput.value = "";
+                scoreInput.value = "";
+            }
+        });
+
+        function updateLeaderboard() {
+            leaderboardBody.innerHTML = "";
+            scores.forEach((player, index) => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${player.name}</td>
+                    <td>${player.score}</td>
+                    <td>
+                        <button onclick="changeScore(${index}, 1)">+1</button>
+                        <button onclick="changeScore(${index}, -1)">-1</button>
+                    </td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+        }
+
+        function changeScore(index, amount) {
+            scores[index].score += amount;
+            scores.sort((a, b) => b.score - a.score);
+            localStorage.setItem("scores", JSON.stringify(scores));
+            updateLeaderboard();
+        }
+
+        function resetScores() {
+            scores = [];
+            localStorage.removeItem("scores");
+            updateLeaderboard();
+        }
+
+        updateLeaderboard();
+    </script>
+</body>
+</html>
