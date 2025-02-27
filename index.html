@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scoreboard</title>
+    <title>League Table</title>
     <style>
         body { 
             font-family: Arial, sans-serif; 
@@ -47,7 +47,7 @@
             width: 40%;
         }
         button {
-            background-color: #FFB81C;
+            background-color: #FF69B4;
             color: #003C71;
             cursor: pointer;
             font-weight: bold;
@@ -57,7 +57,7 @@
         }
         .reset-button {
             margin-top: 10px;
-            background-color: #FF5733;
+            background-color: #FF69B4;
             color: white;
         }
         .reset-button:hover {
@@ -67,11 +67,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Scoreboard</h1>
+        <h1>League Table</h1>
         <form id="scoreForm">
             <input type="text" id="playerName" placeholder="Player Name" required>
-            <input type="number" id="playerScore" placeholder="Score" required>
-            <button type="submit">Add Score</button>
+            <button type="submit">Add Player</button>
         </form>
         <table>
             <thead>
@@ -90,21 +89,29 @@
         const form = document.getElementById("scoreForm");
         const leaderboardBody = document.getElementById("leaderboardBody");
         let scores = JSON.parse(localStorage.getItem("scores")) || [];
+        let usedColors = new Set();
+        const availableColors = ["#FF69B4", "#32CD32", "#FFD700", "#1E90FF", "#8A2BE2", "#FF4500", "#40E0D0"];
+        
+        function getUniqueColor() {
+            let available = availableColors.filter(color => !usedColors.has(color));
+            if (available.length === 0) usedColors.clear();
+            let color = available[Math.floor(Math.random() * available.length)];
+            usedColors.add(color);
+            return color;
+        }
 
         form.addEventListener("submit", function(event) {
             event.preventDefault();
             const nameInput = document.getElementById("playerName");
-            const scoreInput = document.getElementById("playerScore");
             const name = nameInput.value.trim();
-            const score = parseInt(scoreInput.value, 10);
             
-            if (name && !isNaN(score)) {
-                scores.push({ name, score });
+            if (name) {
+                let color = getUniqueColor();
+                scores.push({ name, score: 0, color });
                 scores.sort((a, b) => b.score - a.score);
                 localStorage.setItem("scores", JSON.stringify(scores));
                 updateLeaderboard();
                 nameInput.value = "";
-                scoreInput.value = "";
             }
         });
 
@@ -114,11 +121,12 @@
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${index + 1}</td>
-                    <td>${player.name}</td>
+                    <td style="background-color:${player.color}; color: white;">${player.name}</td>
                     <td>${player.score}</td>
                     <td>
                         <button onclick="changeScore(${index}, 1)">+1</button>
                         <button onclick="changeScore(${index}, -1)">-1</button>
+                        <button onclick="removePlayer(${index})">Remove</button>
                     </td>
                 `;
                 leaderboardBody.appendChild(row);
@@ -132,8 +140,16 @@
             updateLeaderboard();
         }
 
+        function removePlayer(index) {
+            usedColors.delete(scores[index].color);
+            scores.splice(index, 1);
+            localStorage.setItem("scores", JSON.stringify(scores));
+            updateLeaderboard();
+        }
+
         function resetScores() {
             scores = [];
+            usedColors.clear();
             localStorage.removeItem("scores");
             updateLeaderboard();
         }
